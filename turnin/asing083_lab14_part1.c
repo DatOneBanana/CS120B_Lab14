@@ -15,21 +15,21 @@
 #include "timer.h"
 #endif
 
-static unsigned char _leader = 1;
+static unsigned char leaderSignal = 1;
 
-enum leader_state { U_WAIT };
+enum leader_state { L_WAIT };
 int tick_leader(int state) {
     static unsigned char send_val = 0;
 
     switch (state) {
-        case U_WAIT:
-            if (_leader && USART_IsSendReady(0)) {
+        case L_WAIT:
+            if (leaderSignal && USART_IsSendReady(0)) {
                 send_val = !send_val;
                 PORTA = send_val & 0x01;
                 USART_Send(send_val, 0);
             }
         default:
-            state = U_WAIT;
+            state = L_WAIT;
     }
     return state;
 }

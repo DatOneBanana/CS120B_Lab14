@@ -15,20 +15,20 @@
 #include "timer.h"
 #endif
 
-static unsigned char _leader = 0;
+static unsigned char leaderSignal = 0;
 
-enum follower_state { U_WAIT };
+enum follower_state { F_WAIT };
 int tick_follower(int state) {
     static unsigned char rec_val = 0;
 
     switch (state) {
-        case U_WAIT:
-            if (!_leader && USART_HasReceived(0)) {
-				rec_val = USART_Receive(0);
+        case F_WAIT:
+            if (!leaderSignal && USART_HasReceived(0)) {
+		rec_val = USART_Receive(0);
                 PORTA = rec_val & 0x01;
             }
         default:
-            state = U_WAIT;
+            state = F_WAIT;
     }
     return state;
 }
