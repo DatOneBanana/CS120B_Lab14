@@ -16,25 +16,23 @@
 #endif
 
 
-static unsigned char _leader = 1;
+static unsigned char _leader = 0;
 
-enum leader_state { U_WAIT,U_WAIT2 };
-int tick_leader(int state) {
-    static unsigned char send_val = 0;
+enum follower_state { U_WAIT };
+int tick_follower(int state) {
+    static unsigned char rec_val = 0;
 
     switch (state) {
         case U_WAIT:
-            if (_leader && USART_IsSendReady(1)) {
-                send_val = !send_val;
-                PORTA = send_val & 0x01;
-                USART_Send(send_val, 1);
+            if (!_leader && USART_HasReceived(0)) {
+				rec_val = USART_Receive(0);
+                PORTA = rec_val & 0x01;
             }
         default:
             state = U_WAIT;
     }
     return state;
 }
-
 
 int main(void) {
     /* Insert DDR and PORT initializations */
@@ -50,11 +48,11 @@ int main(void) {
 
 
 	task1.state = 0;
-	task1.period = 1000;
+	task1.period = 20;
 	task1.elapsedTime = task1.period;
-	task1.TickFct = &tick_leader;
+	task1.TickFct = &tick_follower;
 
-	TimerSet(1000);
+	TimerSet(20);
 	TimerOn();
 
     	unsigned short i;
@@ -64,7 +62,7 @@ int main(void) {
 				tasks[i]->state = tasks[i]->TickFct(tasks[i]->state);
 				tasks[i]->elapsedTime = 0;
 			}
-			tasks[i]->elapsedTime += 1000;
+			tasks[i]->elapsedTime += 20;
 		}
 		while(!TimerFlag);
 		TimerFlag = 0;
