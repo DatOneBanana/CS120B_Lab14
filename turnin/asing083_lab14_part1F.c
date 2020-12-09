@@ -15,7 +15,6 @@
 #include "timer.h"
 #endif
 
-
 static unsigned char _leader = 0;
 
 enum follower_state { U_WAIT };
@@ -47,7 +46,7 @@ int main(void) {
 
 
 
-	task1.state = 0;
+	task1.state = -1;
 	task1.period = 20;
 	task1.elapsedTime = task1.period;
 	task1.TickFct = &tick_follower;

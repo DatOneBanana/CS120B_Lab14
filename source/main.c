@@ -15,44 +15,20 @@
 #include "timer.h"
 #endif
 
-
 static unsigned char _leader = 0;
 
-enum leader_state { L_WAIT };
-int tick_leader(int state) {
-	_leader = !_leader;
-    static unsigned char send_val = 0;
-
-    switch (state) {
-        case L_WAIT:
-            if (_leader && USART_IsSendReady(0)) {
-                send_val = !send_val;
-                PORTA = send_val & 0x01;
-                USART_Send(send_val, 0);
-            }
-	    break;
-        default:
-            state = L_WAIT;
-	    break;
-    }
-    return state;
-}
-
-enum follower_state { F_WAIT };
+enum follower_state { U_WAIT };
 int tick_follower(int state) {
-    	_leader = !_leader;
-	static unsigned char rec_val = 0;
+    static unsigned char rec_val = 0;
 
     switch (state) {
-        case F_WAIT:
+        case U_WAIT:
             if (!_leader && USART_HasReceived(0)) {
-		 rec_val = USART_Receive(0);
-	         PORTA = rec_val & 0x01;
+				rec_val = USART_Receive(0);
+                PORTA = rec_val & 0x01;
             }
-	    break;
         default:
-            state = F_WAIT;
-	    break;
+            state = U_WAIT;
     }
     return state;
 }
@@ -64,23 +40,18 @@ int main(void) {
 
 	initUSART(0);
 
-	static task task1, task2;
-	task *tasks[] = { &task1, &task2};
+	static task task1;
+	task *tasks[] = { &task1};
 	const unsigned short numTasks = sizeof(tasks)/sizeof(task*);
 
 
 
-	task1.state = 0;
-	task1.period = 100;
+	task1.state = -1;
+	task1.period = 20;
 	task1.elapsedTime = task1.period;
-	task1.TickFct = &tick_leader;
+	task1.TickFct = &tick_follower;
 
-	task2.state = 0;
-	task2.period = 20;
-	task2.elapsedTime = task2.period;
-	task2.TickFct = &tick_follower;
-
-	TimerSet(10);
+	TimerSet(20);
 	TimerOn();
 
     	unsigned short i;
@@ -90,7 +61,7 @@ int main(void) {
 				tasks[i]->state = tasks[i]->TickFct(tasks[i]->state);
 				tasks[i]->elapsedTime = 0;
 			}
-			tasks[i]->elapsedTime += 10;
+			tasks[i]->elapsedTime += 20;
 		}
 		while(!TimerFlag);
 		TimerFlag = 0;

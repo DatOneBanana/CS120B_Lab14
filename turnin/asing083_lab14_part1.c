@@ -15,19 +15,18 @@
 #include "timer.h"
 #endif
 
-
 static unsigned char _leader = 1;
 
-enum leader_state { U_WAIT,U_WAIT2 };
+enum leader_state { U_WAIT };
 int tick_leader(int state) {
     static unsigned char send_val = 0;
 
     switch (state) {
         case U_WAIT:
-            if (_leader && USART_IsSendReady(1)) {
+            if (_leader && USART_IsSendReady(0)) {
                 send_val = !send_val;
                 PORTA = send_val & 0x01;
-                USART_Send(send_val, 1);
+                USART_Send(send_val, 0);
             }
         default:
             state = U_WAIT;
@@ -49,7 +48,7 @@ int main(void) {
 
 
 
-	task1.state = 0;
+	task1.state = -1;
 	task1.period = 1000;
 	task1.elapsedTime = task1.period;
 	task1.TickFct = &tick_leader;
